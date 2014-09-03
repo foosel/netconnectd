@@ -13,9 +13,9 @@ application running on the device.
 
 ## Setup
 
-Install the hostapd and dnsmasq packages:
+Install the hostapd, dnsmasq and logrotate packages:
 
-    sudo apt-get install hostapd dnsmasq
+    sudo apt-get install hostapd dnsmasq logrotate
 
 Before you continue that hostapd works with your wifi card/dongle! To test, create a file /tmp/hostapd.conf with the 
 following contents:
