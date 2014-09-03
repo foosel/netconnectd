@@ -25,11 +25,22 @@ class Server(object):
         return result
 
     def __init__(self, server_address=None, wifi_if=None, wired_if=None, linkmon_enabled=True, linkmon_maxdown=3, linkmon_interval=10,
-                 ap_ssid=None, ap_psk=None, ap_name='netconnectd_ap', ap_channel=2, ap_ip='10.250.250.1',
+                 ap_driver="nl80211", ap_ssid=None, ap_psk=None, ap_name='netconnectd_ap', ap_channel=2, ap_ip='10.250.250.1',
                  ap_network='10.250.250.0/24', ap_range=('10.250.250.100', '10.250.250.200'), ap_forwarding=False,
-                 ap_domain=None, wifi_name='netconnect_wifi', wifi_free=False):
+                 ap_domain=None, wifi_name='netconnect_wifi', wifi_free=False, path_hostapd="/usr/sbin/hostapd",
+                 path_hostapd_conf="/etc/hostapd/conf.d", path_dnsmasq="/usr/sbin/dnsmasq", path_dnsmasq_conf="/etc/dnsmasq.conf.d",
+                 path_interfaces="/etc/network/interfaces"):
 
         self.logger = logging.getLogger(__name__)
+
+        self.Hostapd = wifi.Hostapd.for_hostapd_and_confd(path_hostapd, path_hostapd_conf)
+        self.Dnsmasq = wifi.Dnsmasq.for_dnsmasq_and_confd(path_dnsmasq, path_dnsmasq_conf)
+        self.Scheme = wifi.Scheme.for_file(path_interfaces)
+        self.AccessPoint = wifi.AccessPoint.for_classes(
+            hostapd_cls=self.Hostapd,
+            dnsmasq_cls=self.Dnsmasq,
+            scheme_cls=self.Scheme
+        )
 
         self.ap_name = ap_name
         self.wifi_if = wifi_if
@@ -43,17 +54,17 @@ class Server(object):
         self.server_address = server_address
 
         # prepare access point configuration
-        self.access_point = wifi.AccessPoint.for_arguments(self.wifi_if, self.ap_name,
+        self.access_point = self.AccessPoint.for_arguments(self.wifi_if, self.ap_name,
                                                            ap_ssid, ap_channel, ap_ip, ap_network,
                                                            ap_range[0], ap_range[1], forwarding_to=wired_if if ap_forwarding else None,
-                                                           hostap_options=dict(psk=ap_psk),
+                                                           hostap_options=dict(psk=ap_psk, driver=ap_driver),
                                                            dnsmasq_options=dict(domain=ap_domain))
         self.access_point.save(allow_overwrite=True)
         if self.access_point.is_running():
             self.access_point.deactivate()
 
         # prepare wifi configuration
-        self.wifi_connection = wifi.Scheme.find(self.wifi_if, self.wifi_name)
+        self.wifi_connection = self.Scheme.find(self.wifi_if, self.wifi_name)
         if not self.wifi_connection:
             self.logger.info("No wifi configuration available yet, will only be able to connect via wire or act as an access point for now")
             self.wifi_available = False
@@ -288,7 +299,7 @@ class Server(object):
         if self.wifi_connection:
             self.wifi_connection.delete()
 
-        self.wifi_connection = wifi.Scheme.for_cell(self.wifi_if, self.wifi_name, cell, passkey=message.psk)
+        self.wifi_connection = self.Scheme.for_cell(self.wifi_if, self.wifi_name, cell, passkey=message.psk)
         self.wifi_connection.save(allow_overwrite=True)
 
         self.wifi_available = True
@@ -348,6 +359,7 @@ def start_server(config):
         linkmon_enabled=config["link_monitor"]["enabled"],
         linkmon_maxdown=config["link_monitor"]["max_link_down"],
         linkmon_interval=config["link_monitor"]["interval"],
+        ap_driver=config["ap"]["driver"],
         ap_ssid=config["ap"]["ssid"],
         ap_psk=config["ap"]["psk"],
         ap_name=config["ap"]["name"],
@@ -358,7 +370,12 @@ def start_server(config):
         ap_forwarding=config["ap"]["forwarding_to_wired"],
         ap_domain=config["ap"]["domain"],
         wifi_name=config["wifi"]["name"],
-        wifi_free=config["wifi"]["free"]
+        wifi_free=config["wifi"]["free"],
+        path_hostapd=config["paths"]["hostapd"],
+        path_hostapd_conf=config["paths"]["hostapd_conf"],
+        path_dnsmasq=config["paths"]["dnsmasq"],
+        path_dnsmasq_conf=config["paths"]["dnsmasq_conf"],
+        path_interfaces=config["paths"]["interfaces"]
     )
     s = Server(**kwargs)
     s.start()
@@ -406,6 +423,7 @@ def server():
     parser.add_argument("--linkmon-maxdown", type=int, default=3, help="Maximum number of link down detections until link monitor starts up AP, defaults to 3")
     parser.add_argument("--linkmon-interval", type=int, default=10, help="Interval of link monitor, defaults to 10")
     parser.add_argument("--ap-name", help="Name to assign to AP config, defaults to 'netconnectd_ap', you mostly won't have to set this")
+    parser.add_argument("--ap-driver", help="The driver to use for the hostapd, defaults to nl80211")
     parser.add_argument("--ap-ssid", help="SSID of the AP wifi")
     parser.add_argument("--ap-psk", help="Passphrase with which to secure the AP wifi, defaults to creation of an unsecured wifi")
     parser.add_argument("--ap-channel", type=int, default=3, help="Channel on which to setup AP, defaults to 3")
@@ -416,7 +434,12 @@ def server():
     parser.add_argument("--ap-forwarding", action="store_true", help="Enable forwarding from AP to wired connection, disabled by default")
     parser.add_argument("--wifi-name", help="Internal name to assign to Wifi config, defaults to 'netconnectd_wifi', you mostly won't have to set this")
     parser.add_argument("--wifi-free", action="store_true", help="Whether the wifi has to be freed from network manager before every configuration attempt, defaults to false")
-    parser.add_argument("--daemon", choices=["stop", "status"], help="Controll the netconnectd daemon, supported arguments are 'stop' and 'status'.")
+    parser.add_argument("--path-hostapd", help="Path to hostapd executable, defaults to /usr/sbin/hostapd")
+    parser.add_argument("--path-hostapd-conf", help="Path to hostapd configuration folder, defaults to /etc/hostapd/conf.d")
+    parser.add_argument("--path-dnsmasq", help="Path to dnsmasq executable, defaults to /usr/sbin/dnsmasq")
+    parser.add_argument("--path-dnsmasq-conf", help="Path to dnsmasq configuration folder, defaults to /etc/dnsmasq.conf.d")
+    parser.add_argument("--path-interfaces", help="Path to interfaces configuration file, defaults to /etc/network/interfaces")
+    parser.add_argument("--daemon", choices=["stop", "status"], help="Control the netconnectd daemon, supported arguments are 'stop' and 'status'.")
 
     args = parser.parse_args()
 
@@ -490,6 +513,8 @@ def server():
 
     if args.ap_name:
         config["ap"]["name"] = args.ap_name
+    if args.ap_driver:
+        config["ap"]["driver"] = args.ap_driver
     if args.ap_ssid:
         config["ap"]["ssid"] = args.ap_ssid
     if args.ap_psk:
@@ -511,6 +536,17 @@ def server():
         config["wifi"]["name"] = args.wifi_name
     if args.wifi_free:
         config["wifi"]["free"] = True
+
+    if args.path_hostapd:
+        config["paths"]["hostapd"] = args.path_hostapd
+    if args.path_hostapd_conf:
+        config["paths"]["hostapd_conf"] = args.path_hostapd_conf
+    if args.path_dnsmasq:
+        config["paths"]["dnsmasq"] = args.path_dnsmasq
+    if args.path_dnsmasq_conf:
+        config["paths"]["dnsmasq_conf"] = args.path_dnsmasq_conf
+    if args.path_interfaces:
+        config["paths"]["interfaces"] = args.path_interfaces
 
     # validate command line
     if not config["socket"]:

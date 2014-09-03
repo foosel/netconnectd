@@ -49,6 +49,7 @@ default_config = dict(
     ),
     ap=dict(
         name="netconnectd_ap",
+        driver="nl80211",
         ssid=None,
         psk=None,
         channel=3,
@@ -61,6 +62,13 @@ default_config = dict(
     wifi=dict(
         name="netconnectd_wifi",
         free=False
+    ),
+    paths=dict(
+        hostapd="/usr/sbin/hostapd",
+        hostapd_conf="/etc/hostapd/conf.d",
+        dnsmasq="/usr/sbin/dnsmasq",
+        dnsmasq_conf="/etc/dnsmasq.conf.d",
+        interfaces="/etc/network/interfaces"
     )
 )
 
