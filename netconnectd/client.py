@@ -75,7 +75,10 @@ def client_send_message(address, message):
 def client():
     parser = argparse.ArgumentParser(parents=[common_arguments])
 
-    subparsers = parser.add_subparsers(help="Client commands")
+    subparsers = parser.add_subparsers(help="Client commands", dest="command")
+
+    # version parser
+    subparser = subparsers.add_parser("version", help="Display version information and exit")
 
     # start_ap parser
     subparser = subparsers.add_parser("start_ap", help="Starts the access point")
@@ -107,7 +110,7 @@ def client():
 
     args = parser.parse_args()
 
-    if args.version:
+    if args.command == "version":
         from ._version import get_versions
         import sys
         print("Version: %s" % get_versions()["version"])

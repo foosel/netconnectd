@@ -1,0 +1,9 @@
+interfaces:
+  wifi: wlan0
+  wired: eth0
+ap:
+  ssid: netconnectd-AP
+  psk: ANotVerySecurePassphraseYouReallyShouldChangeRightNow!!1!
+  forwarding_to_wired: true
+wifi:
+  free: true

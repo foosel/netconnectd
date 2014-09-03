@@ -1,0 +1,22 @@
+# Configuration for /etc/init.d/netconnectd
+
+# Path to the netconnectd executable, use this to override the default setting "/usr/local/bin/netconnectd"
+#DAEMON=/usr/local/bin/netconnectd
+
+# Path to netconnectd configuration file
+#CONFIGFILE=/etc/netconnectd.yaml
+
+# Path to socket file
+#SOCKET=/var/run/netconnectd.sock
+
+# Path to pid file
+#PIDFILE=/var/run/netconnectd.pid
+
+# Path to log file
+#LOGFILE=/var/log/netconnectd.log
+
+# Additional arguments to pass to netconnectd
+#DAEMON_ARGS=""
+
+# Should we run at startup?
+START=yes

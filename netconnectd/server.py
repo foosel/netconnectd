@@ -56,6 +56,7 @@ class Server(object):
         self.wifi_connection = wifi.Scheme.find(self.wifi_if, self.wifi_name)
         if not self.wifi_connection:
             self.logger.info("No wifi configuration available yet, will only be able to connect via wire or act as an access point for now")
+            self.wifi_available = False
         else:
             self.wifi_available = True
 
@@ -393,17 +394,11 @@ def server():
 
         return start, end
 
-    subparsers = parser.add_subparsers()
-
-    subparser = subparsers.add_parser("daemon", help="Control the netconnectd daemon")
-    command_group = subparser.add_mutually_exclusive_group(required=True)
-    command_group.add_argument("stop", help="Stop the daemon")
-    command_group.add_argument("status", help="Status of the daemon")
-
     parser.add_argument("-F", "--foreground", action="store_true", help="Run in foreground instead of as daemon")
     parser.add_argument("-p", "--pid", default="/var/run/netconnectd.pid", help="Pidfile to use for demonizing, defaults to /var/run/netconnectd.pid")
     parser.add_argument("-d", "--debug", action="store_true", help="Enable debug logging")
     parser.add_argument("-q", "--quiet", action="store_true", help="Disable console output")
+    parser.add_argument("-v", "--version", action="store_true", help="Display version information and exit")
     parser.add_argument("--logfile", default="/var/log/netconnectd.log", help="Location of logfile, defaults to /var/log/netconnectd.log")
     parser.add_argument("--interface-wifi", help="Wifi interface")
     parser.add_argument("--interface-wired", help="Wired interface")
@@ -421,6 +416,7 @@ def server():
     parser.add_argument("--ap-forwarding", action="store_true", help="Enable forwarding from AP to wired connection, disabled by default")
     parser.add_argument("--wifi-name", help="Internal name to assign to Wifi config, defaults to 'netconnectd_wifi', you mostly won't have to set this")
     parser.add_argument("--wifi-free", action="store_true", help="Whether the wifi has to be freed from network manager before every configuration attempt, defaults to false")
+    parser.add_argument("--daemon", choices=["stop", "status"], help="Controll the netconnectd daemon, supported arguments are 'stop' and 'status'.")
 
     args = parser.parse_args()
 
@@ -429,6 +425,29 @@ def server():
         import sys
         print("Version: %s" % get_versions()["version"])
         sys.exit(0)
+
+    if args.daemon:
+        import os
+        import sys
+        from .daemon import Daemon
+
+        if args.daemon == "stop":
+            # stop the daemon
+            daemon = Daemon(pidfile=args.pid)
+            daemon.stop()
+            sys.exit(0)
+        elif args.daemon == "status":
+            # report the status of the daemon
+            if os.path.exists(args.pid):
+                with open(args.pid, "r") as f:
+                    pid = f.readline().strip()
+
+                if pid:
+                    if os.path.exists(os.path.join("/proc", pid)):
+                        print("Running (Pid %s)" % pid)
+                        sys.exit(0)
+            print ("Not running")
+            sys.exit(0)
 
     # configure logging
     logging_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -442,9 +461,14 @@ def server():
     import copy
     config = copy.deepcopy(default_config)
 
-    if args.config:
+    configfile = args.config
+    if not configfile:
+        configfile = "/etc/netconnectd.yaml"
+
+    import os
+    if os.path.exists(configfile):
         try:
-            config = parse_configfile(args.config)
+            config = parse_configfile(configfile)
         except InvalidConfig as e:
             parser.error("Invalid configuration file: " + e.message)
 
@@ -499,6 +523,7 @@ def server():
     if args.foreground:
         # start directly instead of as daemon
         start_server(config)
+
     else:
         # start as daemon
         from .daemon import Daemon

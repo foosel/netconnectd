@@ -9,7 +9,6 @@ import os
 common_arguments = argparse.ArgumentParser(add_help=False)
 common_arguments.add_argument("-a", "--address", type=str, help="Address of Unix Domain Socket used for communication")
 common_arguments.add_argument("-c", "--config", type=str, help="Location of config file to use")
-common_arguments.add_argument("-v", "--version", action="store_true", help="Display version information and exit")
 
 
 def has_link():

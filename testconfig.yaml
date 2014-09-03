@@ -1,0 +1,8 @@
+interfaces:
+  wifi: wlan0
+  wired: eth0
+ap:
+  ssid: Witbox0815
+  forwarding_to_wired: true
+wifi:
+  free: true
