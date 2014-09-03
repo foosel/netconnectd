@@ -15,8 +15,8 @@
 # Path to log file
 #LOGFILE=/var/log/netconnectd.log
 
-# Additional arguments to pass to netconnectd
-#DAEMON_ARGS=""
+# Arguments to pass to netconnectd
+#DAEMON_ARGS="--config $CONFIGFILE --address $SOCKET --logfile $LOGFILE --foreground"
 
 # Should we run at startup?
 START=yes

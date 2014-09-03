@@ -1,11 +1,15 @@
 # netconnectd
 
-netconnectd is a small daemon that ensures connectivity for single-PCB devices such as the Raspberry Pi where you don't always have the means to setup your network
-interfaces by hand.
+netconnectd is a small daemon that ensures connectivity for single-PCB devices such as the Raspberry Pi where you don't 
+always have the means to setup your network interfaces by hand.
 
-It monitors your current link status by checking if there are any other systems reachable and if not fires up an access point (via hostapd and dnsmasq). Additionally it allows control and configuration via a unix domain socket and a command line client/JSON based command protocol that allows listing available wifi cells and configuring a wifi network to use instead of the AP in the future.
+It monitors your current link status by checking if there are any other systems reachable and if not fires up an access 
+point (via hostapd and dnsmasq). Additionally it allows control and configuration via a unix domain socket and a command 
+line client/JSON based command protocol that allows listing available wifi cells and configuring a wifi network to use 
+instead of the AP in the future.
 
-It is intended to be used as part of a connectivity solution, acting as the backend to a frontend e.g. in a web application running on the device.
+It is intended to be used as part of a connectivity solution, acting as the backend to a frontend e.g. in a web 
+application running on the device.
 
 ## Setup
 
@@ -13,7 +17,8 @@ Install the hostapd and dnsmasq packages:
 
     sudo apt-get install hostapd dnsmasq
 
-Before you continue that hostapd works with your wifi card/dongle! To test, create a file /tmp/hostapd.conf with the following contents:
+Before you continue that hostapd works with your wifi card/dongle! To test, create a file /tmp/hostapd.conf with the 
+following contents:
 
     interface=wlan0
     driver=nl80211
@@ -29,14 +34,12 @@ Then run
 
     sudo hostapd -dd /tmp/hostapd.conf
 
-This should not show any errors but start up a new access point named "TestAP" and with passphrase "MySuperSecretPassphrase", verify that with a different wifi enabled device (e.g. mobile phone).
+This should not show any errors but start up a new access point named "TestAP" and with passphrase 
+"MySuperSecretPassphrase", verify that with a different wifi enabled device (e.g. mobile phone).
 
-If you run into errors in this step, solve them first, e.g. by googling your wifi dongle plus "hostapd". You might need a custom version of hostapd (e.g. for the Edimax ...) or a custom driver.
-
-Next create a couple of folders netconnectd will use for storing configuration files:
-
-    sudo mkdir -p /etc/hostapd/conf.d
-    sudo mkdir -p /etc/dnsmasq.conf.d
+If you run into errors in this step, solve them first, e.g. by googling your wifi dongle plus "hostapd". You might need 
+a custom version of hostapd (e.g. for the [Edimax EW-7811Un or other RTL8188 based cards](http://jenssegers.be/blog/43/Realtek-RTL8188-based-access-point-on-Raspberry-Pi)) 
+or a custom driver.
 
 Then install `netconnectd`
 
@@ -45,7 +48,9 @@ Then install `netconnectd`
     sudo python setup.py install
     sudo python setup.py install_extras
 
-Modify `/etc/netconnectd.yaml` to your liking (at least change the passphrase/psk of your AP, you might also have to change the interface names of your wifi and wired network interfaces and also -- if your machine is NOT running NetworkManager -- set `wifi > free` to `false`).
+Modify `/etc/netconnectd.yaml` to your liking (at least change the passphrase/psk of your AP, you might also have to 
+change the interface names of your wifi and wired network interfaces and also -- if your machine is NOT running 
+NetworkManager -- set `wifi > free` to `false`).
 
 Last, start netconnectd:
 

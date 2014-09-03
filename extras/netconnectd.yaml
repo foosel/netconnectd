@@ -1,9 +1,86 @@
+# control socket to listen on
+#socket: /var/run/netconnectd.sock
+
+# wifi and wired interface
 interfaces:
   wifi: wlan0
   wired: eth0
+
+# link monitor configuration
+#link_monitor:
+#  # whether to enable the link monitor
+#  enabled: True
+#
+#  # after how many consecutive link down events to start up the AP
+#  max_link_down: 3
+#
+#  # interval between link checks
+#  interval: 10
+
+
+# access point configuration
 ap:
-  ssid: netconnectd-AP
+  # nick name under which to save the AP configuration, usually won't need to be changed
+  #name: netconnectd_ap
+
+  # driver to use for hostapd, you might have to change this depending
+  # on your wifi card/dongle
+  #driver: nl80211
+
+  # your AP wifi's SSID
+  ssid: netconnectdAP
+
+  # your AP wifi's passphrase
   psk: ANotVerySecurePassphraseYouReallyShouldChangeRightNow!!1!
-  forwarding_to_wired: true
+
+  # wifi channel on which the AP should run
+  #channel: 3
+
+  # ip of the AP on the created wifi, also check if you need to adjust 
+  # network and range if you change this
+  #ip: 10.250.250.1
+
+  # network of the created wifi, also check if you need to adjust ip 
+  # and range if you change this
+  #network: 10.250.250.0/24
+
+  # range of ip addresses to hand out via dhcpd, first ip and last ip,
+  # also check if you need to adjust ip and network if you change this
+  #range:
+  #- 10.250.250.100
+  #- 10.250.250.200
+
+  # if you also want to reach your hosts by something like myhost.home,
+  # set this, normally unset
+  #domain: home
+
+  # whether to create a true AP forwarding to the wired interface, defaults
+  # to false
+  #forwarding_to_wired: false 
+
+# wifi configuration
 wifi:
+  # nick name under which the wifi connection will be saved, usually 
+  # no need to change this
+  #name: netconnectd_wifi
+
+  # if your system doesn't run NetworkManager, set this to false
   free: true
+
+# various paths of tools used
+paths:
+  # path to hostapd executable
+  #hostapd: /usr/sbin/hostapd
+
+  # folder where to store managed hostapd configuration files
+  hostapd_conf: /etc/netconnectd.conf.d/hostapd
+
+  # path to dnsmasq executable
+  #dnsmasq: /usr/sbin/dnsmasq
+
+  # folder where to store managed dnsmasq configuration files
+  dnsmasq_conf: /etc/netconnectd.conf.d/dnsmasq
+
+  # path to interfaces file to use, usually no need to change this
+  #interfaces: /etc/network/interfaces
+

@@ -23,7 +23,13 @@ It also supports control, wifi configuration and status queries via a
 JSON-based protocol over a unix domain socket.
 """
 
-EXTRAS = [
+EXTRAS_FOLDERS = [
+    ('/etc/netconnectd.conf.d', 0755),
+    ('/etc/netconnectd.conf.d/hostapd', 0755),
+    ('/etc/netconnectd.conf.d/dnsmasq', 0755)
+]
+
+EXTRAS_FILES = [
     ('/etc/init.d/', [('extras/netconnectd.init', 'netconnectd', 0755)]),
     ('/etc/default/', [('extras/netconnectd.default', 'netconnectd', 0644)]),
     ('/etc/', [('extras/netconnectd.yaml', 'netconnectd.yaml', 0600)])
@@ -66,11 +72,23 @@ class InstallExtrasCommand(Command):
             self.force = False
 
     def run(self):
-        global EXTRAS
+        global EXTRAS_FILES, EXTRAS_FOLDERS
         import shutil
         import os
 
-        for target, files in EXTRAS:
+        for folder, mode in EXTRAS_FOLDERS:
+            try:
+                if os.path.exists(folder):
+                    os.chmod(folder, mode)
+                else:
+                    os.mkdir(folder, mode)
+            except Exception as e:
+                import sys
+
+                print("Error while creating %s (%s), aborting" % (folder, e.message))
+                sys.exit(-1)
+
+        for target, files in EXTRAS_FILES:
             for entry in files:
                 extra_tuple = get_extra_tuple(entry)
                 if extra_tuple is None:
@@ -116,10 +134,10 @@ class UninstallExtrasCommand(Command):
         pass
 
     def run(self):
-        global EXTRAS
+        global EXTRAS_FILES, EXTRAS_FOLDERS
         import os
 
-        for target, files in EXTRAS:
+        for target, files in EXTRAS_FILES:
             for entry in files:
                 extra_tuple = get_extra_tuple(entry)
                 if extra_tuple is None:
@@ -132,6 +150,12 @@ class UninstallExtrasCommand(Command):
                     print("Removed %s" % target_path)
                 except Exception as e:
                     print("Error while deleting %s from %s (%s), please remove manually" % (filename, target, e.message))
+
+        for folder, mode in EXTRAS_FOLDERS[::-1]:
+            try:
+                os.rmdir(folder)
+            except Exception as e:
+                print("Error while removing %s (%s), please remove manually" % (folder, e.message))
 
 
 def get_cmdclass():
