@@ -21,7 +21,7 @@ class Server(object):
     def convert_cells(cls, cells):
         result = []
         for cell in cells:
-            result.append(dict(ssid=cell.ssid, channel=cell.channel, address=cell.address, encrypted=cell.encrypted))
+            result.append(dict(ssid=cell.ssid, channel=cell.channel, address=cell.address, encrypted=cell.encrypted, signal=cell.signal if hasattr(cell, "signal") else None))
         return result
 
     def __init__(self, server_address=None, wifi_if=None, wired_if=None, linkmon_enabled=True, linkmon_maxdown=3, linkmon_interval=10,
