@@ -4,16 +4,22 @@ from __future__ import (print_function, absolute_import)
 import argparse
 import logging
 import netaddr
+import re
 import subprocess
 import time
 import threading
 import wifi
 import wifi.scheme
+import wifi.utils
 
 
 from .util import has_link, common_arguments, default_config, parse_configfile, InvalidConfig
 from .protocol import (Message, StartApMessage, StopApMessage, ListWifiMessage, ConfigureWifiMessage, SelectWifiMessage,
                        StatusMessage, SuccessResponse, ErrorResponse)
+
+
+iwconfig_re = re.compile('ESSID:"(?P<ssid>[^"]+)".*Access Point: (?P<address>%s).*' % wifi.utils.mac_addr_pattern , re.DOTALL)
+
 
 class Server(object):
 
@@ -46,6 +52,8 @@ class Server(object):
         self.wifi_if = wifi_if
         self.wifi_name = wifi_name
         self.wifi_free = wifi_free
+
+        self.wired_if = wired_if
 
         self.linkmon_enabled = linkmon_enabled
         self.linkmon_maxdown = linkmon_maxdown
@@ -316,7 +324,30 @@ class Server(object):
             return False, 'could not connect'
 
     def on_status_message(self, message):
-        return True, dict(link=self.last_link, devs=self.last_reachable_devs, ap=self.access_point.is_running(), wifi_available=self.wifi_available)
+        current_ssid, current_address = self.current_wifi
+
+        wifi = wired = ap = False
+        if self.wifi_if in self.last_reachable_devs and not self.access_point.is_running() and current_ssid:
+            wifi = True
+        elif self.access_point.is_running():
+            ap = True
+        if self.wired_if in self.last_reachable_devs:
+            wired = True
+
+        return True, dict(
+            link=self.last_link,
+            devs=self.last_reachable_devs,
+            connections=dict(
+                wifi=wifi,
+                ap=ap,
+                wired=wired,
+            ),
+            wifi=dict(
+                current_ssid=current_ssid,
+                current_address=current_address,
+                valid_config=self.wifi_available
+            )
+        )
 
     def on_link_change(self, former_link, current_link, current_devs):
         self.last_link = current_link
@@ -349,6 +380,16 @@ class Server(object):
             if key in self.wifi_connection.options:
                 ssid = self.wifi_connection.options[key]
         return ssid
+
+    @property
+    def current_wifi(self):
+        iwconfig_output = subprocess.check_output(["/sbin/iwconfig", self.wifi_if])
+
+        m = iwconfig_re.search(iwconfig_output)
+        if not m:
+            return None, None
+
+        return m.group('ssid'), m.group('address')
 
 
 def start_server(config):
