@@ -19,6 +19,33 @@ netconnectd has been written to work with [Debian] based Linux distributions suc
 [Raspbian]: http://www.raspbian.org/
 [Ubuntu]: http://www.ubuntu.com/
 
+## Motivation
+
+The reason for writing a dedicated service to do that instead of just integrating that kind of functionality directly
+in the client software is simply that I did want a solution which allowed configuration of wifi networks and
+starting/stoping of access point mode through a piece of client software without the need for the client software
+to need to run with superuser privileges (or a myriad of sudo rights having to be built up all around it).
+
+Of course, there already exist such solutions, e.g. [NetworkManager] and [wicd], which allow configuration of network
+connectivity via inter process communication. There are four problems with the existing solutions
+though: They use DBUS for the inter process communication (which is rather targeted at desktop applications, not
+at headless environments, and also brings a certain overhead to the table), they focus on the desktop environment,
+they are tightly integrated with the existing system and do not offer much flexibility regarding specific needs of 
+client applications in regards to special configuration options and - the biggest of the issues - don't support 
+configuration of access point mode (at least not out of the box and without jumping through big hoops).
+
+Therefore netconnectd was designed based on the following requirements:
+
+  * Offer a very lightweight means of inter process communication (JSON messages via a Unix Domain Socket in that case)
+  * Focus on headless environments (no UI)
+  * Be as configurable in regards to used tooling as possible (by extensive configuration options via both a config
+    file as well as during startup via command line arguments overriding anything else)
+  * Be able to fire up an access point mode (via a combination of hostapd, dnsmasq as DHCP server and optionally also
+    a bunch of iptable entries)
+
+[NetworkManager]: https://wiki.gnome.org/Projects/NetworkManager
+[wicd]: http://wicd.sourceforge.net/
+
 ## Setup
 
 ### Prepare the system
