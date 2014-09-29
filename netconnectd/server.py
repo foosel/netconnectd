@@ -197,13 +197,13 @@ class Server(object):
         return True
 
     def stop_ap(self):
-        self.free_wifi()
-        self.access_point.deactivate()
-        self.logger.info("Stopped AP")
-
         # make sure multicast addresses can be routed on the AP
         subprocess.check_call(['/sbin/ip', 'route', 'del', '224.0.0.0/4', 'dev', self.wifi_if])
         subprocess.check_call(['/sbin/ip', 'route', 'del', '239.255.255.250', 'dev', self.wifi_if])
+
+        self.free_wifi()
+        self.access_point.deactivate()
+        self.logger.info("Stopped AP")
 
         return True
 
