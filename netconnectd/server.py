@@ -357,6 +357,7 @@ class Server(object):
         self.link_down_count = self.linkmon_maxdown
         if self.wifi_connection:
             self.forget_wifi()
+        return True, 'reset daemon'
 
     def on_status_message(self, message):
         current_ssid, current_address = self.current_wifi
