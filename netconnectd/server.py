@@ -15,7 +15,7 @@ import wifi.utils
 
 from .util import has_link, common_arguments, default_config, parse_configfile, InvalidConfig
 from .protocol import (Message, StartApMessage, StopApMessage, ListWifiMessage, ConfigureWifiMessage, SelectWifiMessage,
-                       StatusMessage, SuccessResponse, ErrorResponse)
+                       ForgetWifiMessage, ResetMessage, StatusMessage, SuccessResponse, ErrorResponse)
 
 
 iwconfig_re = re.compile('ESSID:"(?P<ssid>[^"]+)".*Access Point: (?P<address>%s).*' % wifi.utils.mac_addr_pattern , re.DOTALL)
@@ -173,6 +173,8 @@ class Server(object):
         message_callbacks[ConfigureWifiMessage.__cmd__] = self.on_configure_wifi_message
         message_callbacks[SelectWifiMessage.__cmd__] = self.on_select_wifi_message
         message_callbacks[StatusMessage.__cmd__] = self.on_status_message
+        message_callbacks[ResetMessage.__cmd__] = self.on_reset_message
+        message_callbacks[ForgetWifiMessage.__cmd__] = self.on_forget_wifi_message
 
         self._socket_monitor(self.server_address, callbacks=message_callbacks)
 
