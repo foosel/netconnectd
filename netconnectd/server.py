@@ -264,6 +264,18 @@ class Server(object):
                 self.logger.warn("Could not deactivate wifi connection again, that's odd")
             return False
 
+    def forget_wifi(self):
+        self.logger.debug("Forgetting configured wifi...")
+        if not self.wifi_available or not self.wifi_connection:
+            self.wifi_available = False
+            self.logger.debug("No wifi configured to forget")
+            return True
+
+        self.free_wifi()
+        self.wifi_connection.deactivate()
+        self.wifi_connection.delete()
+        return True
+
     def on_start_ap_message(self, message):
         if self.access_point is None:
             return False, 'access point is None'
@@ -332,6 +344,17 @@ class Server(object):
             return True, 'connected to wifi'
         else:
             return False, 'could not connect'
+
+    def on_forget_wifi_message(self, message):
+        if self.wifi_connection is None:
+            return True, 'wifi was not configured yet'
+
+        return self.forget_wifi(), 'forgot configured wifi'
+
+    def on_reset_message(self, message):
+        self.link_down_count = self.linkmon_maxdown
+        if self.wifi_connection:
+            self.forget_wifi()
 
     def on_status_message(self, message):
         current_ssid, current_address = self.current_wifi

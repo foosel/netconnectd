@@ -3,7 +3,7 @@ from __future__ import (print_function, absolute_import)
 import argparse
 
 from netconnectd.protocol import (StartApMessage, StopApMessage, ListWifiMessage, ConfigureWifiMessage,
-                                  SelectWifiMessage, StatusMessage, Response)
+                                  SelectWifiMessage, ForgetWifiMessage, ResetMessage, StatusMessage, Response)
 from netconnectd.util import (common_arguments, parse_configfile, InvalidConfig, default_config)
 
 
@@ -25,6 +25,14 @@ def client_configure_wifi(address, args):
 
 def client_select_wifi(address, args):
     client_send_message(address, SelectWifiMessage())
+
+
+def client_forget_wifi(address, args):
+    client_send_message(address, ForgetWifiMessage())
+
+
+def client_reset(address, args):
+    client_send_message(address, ResetMessage())
 
 
 def client_status(address, args):
@@ -103,6 +111,14 @@ def client():
     # select_wifi parser
     subparser = subparsers.add_parser("select_wifi", help="Select WIFI connection")
     subparser.set_defaults(func=client_select_wifi)
+
+    # forget_wifi parser
+    subparser = subparsers.add_parser("forget_wifi", help="Forgets the configured WIFI connection")
+    subparser.set_defaults(func=client_forget_wifi)
+
+    # reset parser
+    subparser = subparsers.add_parser("reset", help="Factory resets the daemon")
+    subparser.set_defaults(func=client_reset)
 
     # status parser
     subparser = subparsers.add_parser("status", help="Display netconnectd status")

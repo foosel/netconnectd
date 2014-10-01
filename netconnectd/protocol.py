@@ -125,6 +125,14 @@ class StatusMessage(Message):
     __cmd__ = "status"
 
 
+class ForgetWifiMessage(Message):
+    __cmd__ = "forget_wifi"
+
+
+class ResetMessage(Message):
+    __cmd__ = "reset"
+
+
 class Response(object):
 
     def __str__(self):
