@@ -276,6 +276,8 @@ class Server(object):
         self.free_wifi()
         self.wifi_connection.deactivate()
         self.wifi_connection.delete()
+        self.wifi_connection = None
+        self.wifi_available = False
         return True
 
     def on_start_ap_message(self, message):
