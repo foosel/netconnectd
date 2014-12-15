@@ -24,15 +24,17 @@ JSON-based protocol over a unix domain socket.
 """
 
 EXTRAS_FOLDERS = [
-    ('/etc/netconnectd.conf.d', 0755),
-    ('/etc/netconnectd.conf.d/hostapd', 0755),
-    ('/etc/netconnectd.conf.d/dnsmasq', 0755)
+    ('/etc/netconnectd', 0755),
+    ('/etc/netconnectd/conf.d', 0755),
+    ('/etc/netconnectd/conf.d/hostapd', 0755),
+    ('/etc/netconnectd/conf.d/dnsmasq', 0755)
 ]
 
 EXTRAS_FILES = [
     ('/etc/init.d/', [('extras/netconnectd.init', 'netconnectd', 0755)]),
     ('/etc/default/', [('extras/netconnectd.default', 'netconnectd', 0644)]),
-    ('/etc/', [('extras/netconnectd.yaml', 'netconnectd.yaml', 0600)]),
+    ('/etc/netconnectd/', [('extras/netconnectd.yaml', 'netconnectd.yaml', 0600)]),
+    ('/etc/netconnectd/', [('extras/netconnectd.action', 'netconnectd.action', 0755)]),
     ('/etc/logrotate.d/', [('extras/netconnectd.logrotate', 'netconnectd', 0644)]),
 ]
 
