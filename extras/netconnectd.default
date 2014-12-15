@@ -4,7 +4,7 @@
 #DAEMON=/usr/local/bin/netconnectd
 
 # Path to netconnectd configuration file
-#CONFIGFILE=/etc/netconnectd.yaml
+#CONFIGFILE=/etc/netconnectd/netconnectd.yaml
 
 # Path to socket file
 #SOCKET=/var/run/netconnectd.sock

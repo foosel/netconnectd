@@ -80,13 +80,13 @@ paths:
   #hostapd: /usr/sbin/hostapd
 
   # folder where to store managed hostapd configuration files
-  hostapd_conf: /etc/netconnectd.conf.d/hostapd
+  hostapd_conf: /etc/netconnectd/conf.d/hostapd
 
   # path to dnsmasq executable
   #dnsmasq: /usr/sbin/dnsmasq
 
   # folder where to store managed dnsmasq configuration files
-  dnsmasq_conf: /etc/netconnectd.conf.d/dnsmasq
+  dnsmasq_conf: /etc/netconnectd/conf.d/dnsmasq
 
   # path to interfaces file to use, usually no need to change this
   #interfaces: /etc/network/interfaces

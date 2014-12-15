@@ -135,7 +135,7 @@ It's finally time to install `netconnectd`:
     sudo python setup.py install
     sudo python setup.py install_extras
 
-Modify `/etc/netconnectd.yaml` as necessary:
+Modify `/etc/netconnectd/netconnectd.yaml` as necessary:
  
   * Change the passphrase/psk for your access point
   * If necessary change the interface names of your wifi and wired network interfaces
