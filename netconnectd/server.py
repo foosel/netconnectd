@@ -263,7 +263,7 @@ class Server(object):
                 if restart_ap:
                     self.access_point.activate()
             except:
-                self.logger.warn("Could not deactivate wifi connection again, that's odd")
+                self.logger.exception("Could not deactivate wifi connection again, that's odd")
             return False
 
     def forget_wifi(self):
