@@ -6,6 +6,7 @@ import logging
 import netaddr
 import re
 import subprocess
+import sys
 import time
 import threading
 import wifi
@@ -38,6 +39,9 @@ class Server(object):
                  path_interfaces="/etc/network/interfaces"):
 
         self.logger = logging.getLogger(__name__)
+        def exception_logger(exc_type, exc_value, exc_tb):
+            self.logger.error("Uncaught exception", exc_info=(exc_type, exc_value, exc_tb))
+        sys.excepthook = exception_logger
 
         self.Hostapd = wifi.Hostapd.for_hostapd_and_confd(path_hostapd, path_hostapd_conf)
         self.Dnsmasq = wifi.Dnsmasq.for_dnsmasq_and_confd(path_dnsmasq, path_dnsmasq_conf)
@@ -98,10 +102,13 @@ class Server(object):
         former_link, reachable_devs = has_link()
 
         while True:
-            current_link, reachable_devs = has_link()
-            callback(former_link, current_link, reachable_devs)
-            time.sleep(interval)
-            former_link = current_link
+            try:
+                current_link, reachable_devs = has_link()
+                callback(former_link, current_link, reachable_devs)
+                time.sleep(interval)
+                former_link = current_link
+            except:
+                self.logger.exception("Something went wrong inside the link monitor")
 
     def _socket_monitor(self, server_address, callbacks=None):
         if not callbacks:
@@ -185,25 +192,36 @@ class Server(object):
 
     def start_ap(self):
         # do a last scan before we bring up the ap
-        self.wifi_scan()
+        self.logging.info("Scanning for available networks")
+        try:
+            self.wifi_scan()
+        except:
+            # oops, that apparently ran into trouble!
+            self.logger.exception("Got an error while trying to scan for available networks before bringing up AP")
 
         # bring up the ap
+        self.logger.info("Freeing wifi interface")
         self.free_wifi()
+        self.logger.info("Starting up AP")
         self.access_point.activate()
         self.logger.info("Started up AP")
 
         # make sure multicast addresses can be routed on the AP
         subprocess.check_call(['/sbin/ip', 'route', 'add', '224.0.0.0/4', 'dev', self.wifi_if])
         subprocess.check_call(['/sbin/ip', 'route', 'add', '239.255.255.250', 'dev', self.wifi_if])
+        self.logger.info("Added multicast routes")
 
         return True
 
     def stop_ap(self):
         # make sure multicast addresses can be routed on the AP
+        self.logger.info("Removing multicast routes")
         subprocess.check_call(['/sbin/ip', 'route', 'del', '224.0.0.0/4', 'dev', self.wifi_if])
         subprocess.check_call(['/sbin/ip', 'route', 'del', '239.255.255.250', 'dev', self.wifi_if])
 
+        self.logger.info("Freeing wifi interface")
         self.free_wifi()
+        self.logger.info("Stopping AP")
         self.access_point.deactivate()
         self.logger.info("Stopped AP")
 
