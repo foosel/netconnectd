@@ -231,11 +231,15 @@ class Server(object):
         if self.access_point.is_running():
             raise RuntimeError("Can't scan for wifi cells when in ap mode")
 
+        self.logger.info("Freeing wifi interface")
         self.free_wifi()
+        self.logger.info("Starting interface %s" % self.wifi_if)
         subprocess.check_call(['ifconfig', self.wifi_if, 'up'])
 
+        self.logger.info("Scanning for cells")
         self.cells = wifi.Cell.all(self.wifi_if)
 
+        self.logger.info("Converting result of scan")
         return self.__class__.convert_cells(self.cells)
 
     def find_cell(self, ssid, force=False):
@@ -243,6 +247,7 @@ class Server(object):
             if not force:
                 return None
 
+            self.logger.info("No cached copy of available wifi networks, have to scan")
             if self.access_point.is_running():
                 # ap activation includes explicit call to wifi_scan
                 self.stop_ap()
@@ -291,11 +296,15 @@ class Server(object):
             self.logger.debug("No wifi configured to forget")
             return True
 
+        self.logger.info("Freeing wifi interface")
         self.free_wifi()
+        self.logger.info("Deactivating wifi connection")
         self.wifi_connection.deactivate()
+        self.logger.info("Deleting wifi connection")
         self.wifi_connection.delete()
         self.wifi_connection = None
         self.wifi_available = False
+        self.logger.info("Forgot wifi")
         return True
 
     def on_start_ap_message(self, message):
