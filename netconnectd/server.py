@@ -99,6 +99,10 @@ class Server(object):
         # we start out with a fully maxed link down count so that we will directly try to create a connection
         self.link_down_count = linkmon_maxdown
 
+        # we need to make sure that client messages and link events are never handled concurrently, so we synchronize via
+        # this mutex
+        self.mutex = threading.RLock()
+
 
     def _link_monitor(self, interval=10, callback=None):
         former_link, reachable_devs = has_link()
@@ -107,8 +111,9 @@ class Server(object):
 
         while True:
             try:
-                current_link, reachable_devs = has_link()
-                callback(former_link, current_link, reachable_devs)
+                with self.mutex:
+                    current_link, reachable_devs = has_link()
+                    callback(former_link, current_link, reachable_devs)
                 time.sleep(interval)
                 former_link = current_link
             except:
@@ -138,40 +143,41 @@ class Server(object):
             self.logger.info('Waiting for connection on socket...')
             connection, client_address = sock.accept()
 
-            try:
-                buffer = []
-                while True:
-                    chunk = connection.recv(16)
-                    if chunk:
-                        self.logger.info('Recv: %r' % chunk)
-                        buffer.append(chunk)
-                        if chunk.endswith('\x00'):
-                            break
-
-                data = ''.join(buffer).strip()[:-1]
-
-                ret = False
-                result = 'unknown message'
-
-                message = Message.from_str(data)
-                if message and callbacks and message.cmd in callbacks and callbacks[message.cmd]:
-                    ret, result = callbacks[message.cmd](message)
-
-                if ret:
-                    response = SuccessResponse(result)
-                else:
-                    response = ErrorResponse(result)
-
-                self.logger.info('Send: %s' % str(response))
-                connection.sendall(str(response) + '\x00')
-
-            except:
-                self.logger.exception('Got an error while processing message from client, aborting')
-
+            with self.mutex:
                 try:
-                    connection.sendall(str(ErrorResponse("error while processing message from client")) + '\x00')
+                    buffer = []
+                    while True:
+                        chunk = connection.recv(16)
+                        if chunk:
+                            self.logger.info('Recv: %r' % chunk)
+                            buffer.append(chunk)
+                            if chunk.endswith('\x00'):
+                                break
+
+                    data = ''.join(buffer).strip()[:-1]
+
+                    ret = False
+                    result = 'unknown message'
+
+                    message = Message.from_str(data)
+                    if message and callbacks and message.cmd in callbacks and callbacks[message.cmd]:
+                        ret, result = callbacks[message.cmd](message)
+
+                    if ret:
+                        response = SuccessResponse(result)
+                    else:
+                        response = ErrorResponse(result)
+
+                    self.logger.info('Send: %s' % str(response))
+                    connection.sendall(str(response) + '\x00')
+
                 except:
-                    pass
+                    self.logger.exception('Got an error while processing message from client, aborting')
+
+                    try:
+                        connection.sendall(str(ErrorResponse("error while processing message from client")) + '\x00')
+                    except:
+                        pass
 
     def start(self):
         self.logger.info("### Starting up netconnectd server...")
@@ -197,6 +203,7 @@ class Server(object):
             subprocess.check_call(['rfkill', 'unblock', 'wlan'])
 
     def start_ap(self):
+        self.logger.info("Starting up access point")
         if self.access_point.is_running():
             self.logger.debug("Access point is already running, stopping it first...")
             self.stop_ap()
@@ -285,7 +292,6 @@ class Server(object):
 
     def start_wifi(self, enable_restart=True):
         self.logger.debug("Connecting to wifi %s..." % self.wifi_connection_ssid)
-
         restart_ap = False
         if self.access_point.is_running() and enable_restart:
             self.logger.info("Access Point is currently running, will restore if wifi starting fails!")
@@ -393,7 +399,7 @@ class Server(object):
 
         self.wifi_available = True
         self.logger.info("Saved configuration for wifi %s" % message.ssid)
-        return True, 'configured wifi as "witbox_wifi"'
+        return True, 'configured wifi as "%s"' % self.wifi_name
 
     def on_select_wifi_message(self, message):
         if self.wifi_connection is None:
