@@ -191,6 +191,11 @@ class Server(object):
             subprocess.check_call(['rfkill', 'unblock', 'wlan'])
 
     def start_ap(self):
+        if self.access_point.is_running():
+            self.logger.info("Access point is already running, stopping it first...")
+            self.stop_ap()
+            self.logger.info("... stopped, now continuing with restart it")
+
         # do a last scan before we bring up the ap
         self.logger.info("Scanning for available networks")
         try:
@@ -255,6 +260,9 @@ class Server(object):
             else:
                 self.wifi_scan()
 
+        if not self.cells:
+            return None
+
         try:
             return list(filter(lambda x: x.ssid == ssid, self.cells))[0]
         except IndexError:
@@ -265,6 +273,7 @@ class Server(object):
 
         restart_ap = False
         if self.access_point.is_running():
+            self.logger.info("Access Point is currently running, will restore if wifi starting fails!")
             restart_ap = True
             self.access_point.deactivate()
 
