@@ -192,7 +192,7 @@ class Server(object):
 
     def start_ap(self):
         # do a last scan before we bring up the ap
-        self.logging.info("Scanning for available networks")
+        self.logger.info("Scanning for available networks")
         try:
             self.wifi_scan()
         except:
