@@ -114,7 +114,7 @@ This should not show any errors but start up a new access point named "TestAP" a
 
 If you run into errors in this step, solve them first, e.g. by googling your wifi dongle plus "hostapd". You might need 
 a custom version of hostapd (e.g. for the [Edimax EW-7811Un or other RTL8188 based cards](http://jenssegers.be/blog/43/Realtek-RTL8188-based-access-point-on-Raspberry-Pi)) 
-or a custom driver. If you change anything regarding to `hostapd` during getting this to work, verify again afterwards
+or a custom driver. If you change anything related to `hostapd` during getting this to work, verify again afterwards
 that the automatic startup of `hostapd` is still disabled and if not, disable it again (see above for infos on how
 to do that).
 
