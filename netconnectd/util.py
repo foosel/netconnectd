@@ -61,7 +61,8 @@ default_config = dict(
     ),
     wifi=dict(
         name="netconnectd_wifi",
-        free=False
+        free=False,
+        kill=False,
     ),
     paths=dict(
         hostapd="/usr/sbin/hostapd",

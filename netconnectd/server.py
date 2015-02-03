@@ -34,7 +34,7 @@ class Server(object):
     def __init__(self, server_address=None, wifi_if=None, wired_if=None, linkmon_enabled=True, linkmon_maxdown=3, linkmon_interval=10,
                  ap_driver="nl80211", ap_ssid=None, ap_psk=None, ap_name='netconnectd_ap', ap_channel=2, ap_ip='10.250.250.1',
                  ap_network='10.250.250.0/24', ap_range=('10.250.250.100', '10.250.250.200'), ap_forwarding=False,
-                 ap_domain=None, wifi_name='netconnect_wifi', wifi_free=False, path_hostapd="/usr/sbin/hostapd",
+                 ap_domain=None, wifi_name='netconnect_wifi', wifi_free=False, wifi_kill=False, path_hostapd="/usr/sbin/hostapd",
                  path_hostapd_conf="/etc/hostapd/conf.d", path_dnsmasq="/usr/sbin/dnsmasq", path_dnsmasq_conf="/etc/dnsmasq.conf.d",
                  path_interfaces="/etc/network/interfaces"):
 
@@ -56,6 +56,7 @@ class Server(object):
         self.wifi_if = wifi_if
         self.wifi_name = wifi_name
         self.wifi_free = wifi_free
+        self.wifi_kill = wifi_kill
 
         self.wired_if = wired_if
 
@@ -200,7 +201,9 @@ class Server(object):
     def free_wifi(self):
         if self.wifi_free:
             subprocess.check_call(['nmcli', 'nm', 'wifi', 'off'])
+        elif self.wifi_kill:
             subprocess.check_call(['rfkill', 'unblock', 'wlan'])
+        subprocess.check_call(['rfkill', 'unblock', 'wlan'])
 
     def start_ap(self):
         self.logger.info("Starting up access point")
@@ -511,6 +514,7 @@ def start_server(config):
         ap_domain=config["ap"]["domain"],
         wifi_name=config["wifi"]["name"],
         wifi_free=config["wifi"]["free"],
+        wifi_kill=config["wifi"]["kill"],
         path_hostapd=config["paths"]["hostapd"],
         path_hostapd_conf=config["paths"]["hostapd_conf"],
         path_dnsmasq=config["paths"]["dnsmasq"],
@@ -574,6 +578,7 @@ def server():
     parser.add_argument("--ap-forwarding", action="store_true", help="Enable forwarding from AP to wired connection, disabled by default")
     parser.add_argument("--wifi-name", help="Internal name to assign to Wifi config, defaults to 'netconnectd_wifi', you mostly won't have to set this")
     parser.add_argument("--wifi-free", action="store_true", help="Whether the wifi has to be freed from network manager before every configuration attempt, defaults to false")
+    parser.add_argument("--wifi-kill", action="store_true", help="Whether the wifi interface has to be killed before every configuration attmept, defaults to false")
     parser.add_argument("--path-hostapd", help="Path to hostapd executable, defaults to /usr/sbin/hostapd")
     parser.add_argument("--path-hostapd-conf", help="Path to hostapd configuration folder, defaults to /etc/hostapd/conf.d")
     parser.add_argument("--path-dnsmasq", help="Path to dnsmasq executable, defaults to /usr/sbin/dnsmasq")
@@ -676,6 +681,8 @@ def server():
         config["wifi"]["name"] = args.wifi_name
     if args.wifi_free:
         config["wifi"]["free"] = True
+    if args.wifi_kill:
+        config["wifi"]["kill"] = True
 
     if args.path_hostapd:
         config["paths"]["hostapd"] = args.path_hostapd
