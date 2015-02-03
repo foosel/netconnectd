@@ -394,7 +394,7 @@ class Server(object):
         if self.wifi_connection:
             self.wifi_connection.delete()
 
-        self.wifi_connection = self.Scheme.for_cell(self.wifi_if, self.wifi_name, cell, passkey=message.psk)
+        self.wifi_connection = self.Scheme.for_cell(self.wifi_if, self.wifi_name, cell, passkey=message.psk if message.psk is not None else "")
         self.wifi_connection.save(allow_overwrite=True)
 
         self.wifi_available = True
