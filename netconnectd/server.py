@@ -202,7 +202,7 @@ class Server(object):
         if self.wifi_free:
             subprocess.check_call(['nmcli', 'nm', 'wifi', 'off'])
         elif self.wifi_kill:
-            subprocess.check_call(['rfkill', 'unblock', 'wlan'])
+            subprocess.check_call(['rfkill', 'block', 'wlan'])
         subprocess.check_call(['rfkill', 'unblock', 'wlan'])
 
     def start_ap(self):
