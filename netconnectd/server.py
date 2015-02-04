@@ -201,9 +201,19 @@ class Server(object):
     def free_wifi(self):
         if self.wifi_free:
             subprocess.check_call(['nmcli', 'nm', 'wifi', 'off'])
-        elif self.wifi_kill:
-            subprocess.check_call(['rfkill', 'block', 'wlan'])
-        subprocess.check_call(['rfkill', 'unblock', 'wlan'])
+            subprocess.check_call(['rfkill', 'unblock', 'wlan'])
+
+    def reset_wifi(self):
+        if self.wifi_kill:
+            import time
+            try:
+                output = subprocess.check_output(['rfkill', 'block', 'wlan'])
+                self.logger.debug("Blocked wifi, sleeping now for 2s: " + output)
+                time.sleep(2)
+                output = subprocess.check_output(['rfkill', 'unblock', 'wlan'])
+                self.logger.debug("Unblocked wifi again: " + output)
+            except:
+                self.logger.exception("Something went wrong while trying to reset the wifi interface")
 
     def start_ap(self):
         self.logger.info("Starting up access point")
@@ -216,15 +226,41 @@ class Server(object):
         self.logger.debug("Scanning for available networks")
         try:
             self.wifi_scan()
-        except:
+        except Exception as e:
             # oops, that apparently ran into trouble!
             self.logger.exception("Got an error while trying to scan for available networks before bringing up AP")
+            if isinstance(e, wifi.scheme.InterfaceError):
+                self.reset_wifi()
 
         # bring up the ap
         self.logger.debug("Freeing wifi interface")
         self.free_wifi()
         self.logger.debug("Starting up AP")
-        self.access_point.activate()
+
+        try:
+            self.access_point.activate()
+        except wifi.scheme.WifiError as e:
+            self.logger.exception("Got an error while trying to activate the access point")
+
+            if isinstance(e, wifi.scheme.InterfaceError):
+                # trying to bring up the ap failed with an interface error => might be that the driver hiccuped due to
+                # some earlier event, or that our interface was not ready yet for being turned into an AP, so we now
+                # try to reset it by blocking/unblocking it and then trying to activate the AP a second time
+                
+                try:
+                    self.access_point.deactivate()
+                except:
+                    self.logger.exception("Error while deactivating the failed AP")
+                
+                self.reset_wifi()
+
+                try:
+                    # let's try that again, sometimes second time's the charm
+                    self.logger.info("First try at bringing up the AP failed, we'll try again now for a second time")
+                    self.access_point.activate()
+                except:
+                    self.logger.exception("Second try at activating the access point failed, giving up")
+                    raise
 
         # make sure multicast addresses can be routed on the AP
         self.logger.debug("Adding multicast routes")
@@ -303,20 +339,22 @@ class Server(object):
 
         self.free_wifi()
 
-        from wifi.scheme import ConnectionError
-
         try:
             self.wifi_connection.activate()
             self.logger.info("Connected to wifi %s" % self.wifi_connection_ssid)
             return True
 
-        except ConnectionError:
+        except wifi.scheme.WifiError as e:
             self.wifi_available = False
             self.logger.warn("Could not connect to wifi %s" % self.wifi_connection_ssid)
             try:
                 self.wifi_connection.deactivate()
             except:
                 self.logger.exception("Could not deactivate wifi connection again, that's odd")
+
+            if isinstance(e, wifi.scheme.InterfaceError):
+                # we encountered an interface error, so we'll try to reset the wifi
+                self.reset_wifi()
 
             if restart_ap:
                 self.start_ap()
