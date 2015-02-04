@@ -50,14 +50,14 @@ Therefore netconnectd was designed based on the following requirements:
 
 ### Prepare the system
 
-Install the hostapd, dnsmasq and logrotate packages:
+Install the hostapd, dnsmasq, logrotate and rfkill packages:
 
     sudo apt-get install hostapd dnsmasq logrotate rfkill
 
 ----
 
 **Note for people updating**: Netconnectd now depends on the ``rfkill`` tool to be installed on the target system as
-well, the above installation instructions have since been updated to reflect this.
+well, the above package installation instructions have since been updated to reflect this.
 
 ----
 
