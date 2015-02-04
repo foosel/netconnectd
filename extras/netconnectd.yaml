@@ -67,6 +67,13 @@ wifi:
   # if your system doesn't run NetworkManager, set this to false
   free: true
 
+  # set this to true if you want to reset the wifi interface via rfkill
+  # upon interface set up errors during wifi connection, scanning or
+  # bringing up the AP, which may happen if the wifi driver hiccups
+  #
+  # Recommended, but depends on the rfkill command to be available
+  kill: true
+
 # various paths of tools used
 paths:
   # path to hostapd executable

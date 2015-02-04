@@ -52,7 +52,14 @@ Therefore netconnectd was designed based on the following requirements:
 
 Install the hostapd, dnsmasq and logrotate packages:
 
-    sudo apt-get install hostapd dnsmasq logrotate
+    sudo apt-get install hostapd dnsmasq logrotate rfkill
+
+----
+
+**Note for people updating**: Netconnectd now depends on the ``rfkill`` tool to be installed on the target system as
+well, the above installation instructions have since been updated to reflect this.
+
+----
 
 We don't want neither `hostapd` nor `dnsmasq` to automatically startup, so make sure their automatic start on boot is 
 disabled:
@@ -133,6 +140,8 @@ Modify `/etc/netconnectd.yaml` as necessary:
   * Change the passphrase/psk for your access point
   * If necessary change the interface names of your wifi and wired network interfaces
   * If your machine is **not** running NetworkManager, set `wifi > free` to `false`
+  * if you **don't** want to reset the wifi interface in case of any detected errors on the driver level, set
+    `wifi > kill` to `false`
  
 Last, start netconnectd:
 
