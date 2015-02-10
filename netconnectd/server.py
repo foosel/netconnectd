@@ -32,7 +32,7 @@ class Server(object):
         return result
 
     def __init__(self, server_address=None, wifi_if=None, wired_if=None, linkmon_enabled=True, linkmon_maxdown=3, linkmon_interval=10,
-                 ap_driver="nl80211", ap_ssid=None, ap_psk=None, ap_name='netconnectd_ap', ap_channel=2, ap_ip='10.250.250.1',
+                 ap_driver="nl80211", ap_ssid=None, ap_psk=None, ap_name='netconnectd_ap', ap_channel=3, ap_ip='10.250.250.1',
                  ap_network='10.250.250.0/24', ap_range=('10.250.250.100', '10.250.250.200'), ap_forwarding=False,
                  ap_domain=None, wifi_name='netconnect_wifi', wifi_free=False, wifi_kill=False, path_hostapd="/usr/sbin/hostapd",
                  path_hostapd_conf="/etc/hostapd/conf.d", path_dnsmasq="/usr/sbin/dnsmasq", path_dnsmasq_conf="/etc/dnsmasq.conf.d",
@@ -623,7 +623,7 @@ def server():
     parser.add_argument("--ap-driver", help="The driver to use for the hostapd, defaults to nl80211")
     parser.add_argument("--ap-ssid", help="SSID of the AP wifi")
     parser.add_argument("--ap-psk", help="Passphrase with which to secure the AP wifi, defaults to creation of an unsecured wifi")
-    parser.add_argument("--ap-channel", type=int, default=3, help="Channel on which to setup AP, defaults to 3")
+    parser.add_argument("--ap-channel", type=int, help="Channel on which to setup AP, defaults to 3")
     parser.add_argument("--ap-ip", type=valid_ip, help="IP of AP host in newly created network, defaults to '10.250.250.1'")
     parser.add_argument("--ap-network", type=valid_network, help="Network address (CIDR4) of network to create on AP, defaults to '10.250.250.0/24'")
     parser.add_argument("--ap-range", type=dhcp_range, help="Range of IPs to handout via DHPC on AP, comma-separated, defaults to '10.250.250.100,10.250.250.200'")
