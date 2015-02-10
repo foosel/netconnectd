@@ -345,6 +345,21 @@ class Server(object):
             return True
 
         except wifi.scheme.WifiError as e:
+            if isinstance(e, wifi.scheme.InterfaceError):
+                # trying to connect to the network failed with an interface error => might be that the driver hiccuped due to
+                # some earlier event, or that our interface was not ready yet, so we now try to reset it by blocking/unblocking
+                # it and then trying to activate the AP a second time
+                self.logger.info("First try at connecting to the network failed with an interface error, we'll try again now for a second time")
+
+                self.reset_wifi()
+
+                try:
+                    # let's try that again, sometimes second time's the charm
+                    self.wifi_connection.activate()
+                    return True
+                except wifi.scheme.WifiError as e:
+                    self.logger.exception("Second try at connecting to the network failed, giving up")
+
             self.wifi_available = False
             self.logger.warn("Could not connect to wifi %s" % self.wifi_connection_ssid)
             try:
