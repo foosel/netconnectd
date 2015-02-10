@@ -224,13 +224,17 @@ class Server(object):
 
         # do a last scan before we bring up the ap
         self.logger.debug("Scanning for available networks")
-        try:
-            self.wifi_scan()
-        except Exception as e:
+        for i in range(2):
+            try:
+                self.wifi_scan()
+            except Exception as e:
+                if isinstance(e, wifi.scheme.InterfaceError):
+                    self.reset_wifi()
+            else:
+                break
+        else:
             # oops, that apparently ran into trouble!
             self.logger.exception("Got an error while trying to scan for available networks before bringing up AP")
-            if isinstance(e, wifi.scheme.InterfaceError):
-                self.reset_wifi()
 
         # bring up the ap
         self.logger.debug("Freeing wifi interface")
