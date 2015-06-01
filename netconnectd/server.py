@@ -55,7 +55,22 @@ class Server(object):
         self.ap_name = ap_name
         self.wifi_if = wifi_if
         self.wifi_name = wifi_name
+
+        # Make sure it's safe to run nmcli
+        if wifi_free:
+            try:
+                subprocess.check_call(['nmcli', 'nm', 'status'])
+            except OSError as e:
+                self.logger.warn("Couldn't run nmcli: %s", e.message)
+                self.logger.warn("Disabling NetworkManager compatibility.")
+                wifi_free = False
+            except subprocess.CalledProcessError as e:
+                self.logger.warn("Error during test run of nmcli: %s", e.message)
+                self.logger.warn("Disabling NetworkManager compatibility.")
+                wifi_free = False
+
         self.wifi_free = wifi_free
+
         self.wifi_kill = wifi_kill
 
         self.wired_if = wired_if
