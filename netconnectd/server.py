@@ -61,7 +61,8 @@ class Server(object):
             try:
                 subprocess.check_call(['nmcli', 'nm', 'status'])
             except OSError as e:
-                self.logger.warn("Couldn't run nmcli: %s", e.message)
+                self.logger.warn("Couldn't run nmcli (%s): %s", e.filename,
+                                 e.message)
                 self.logger.warn("Disabling NetworkManager compatibility.")
                 wifi_free = False
             except subprocess.CalledProcessError as e:
