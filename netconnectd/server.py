@@ -58,7 +58,7 @@ class Server(object):
 
         self.wifi_if_present = True
         try:
-            subprocess.check_call(['', self.wifi_if])
+            subprocess.check_call(['ifconfig', self.wifi_if])
         except subprocess.CalledProcessError as e:
             self.logger.warn("Error while trying to retrieve status of {wifi_if}: {output}".format(wifi_if=self.wifi_if, output=e.output))
             self.wifi_if_present = False
