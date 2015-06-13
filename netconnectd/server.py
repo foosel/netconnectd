@@ -56,6 +56,13 @@ class Server(object):
         self.wifi_if = wifi_if
         self.wifi_name = wifi_name
 
+        self.wifi_if_present = True
+        try:
+            subprocess.check_call(['', self.wifi_if])
+        except subprocess.CalledProcessError as e:
+            self.logger.warn("Error while trying to retrieve status of {wifi_if}: {output}".format(wifi_if=self.wifi_if, output=e.output))
+            self.wifi_if_present = False
+
         # Make sure it's safe to run nmcli
         if wifi_free:
             try:
@@ -232,6 +239,10 @@ class Server(object):
                 self.logger.exception("Something went wrong while trying to reset the wifi interface")
 
     def start_ap(self):
+        if not self.wifi_if_present:
+            self.logger.warn("Wifi interface is not present, can't act as AP")
+            return False
+
         self.logger.info("Starting up access point")
         if self.access_point.is_running():
             self.logger.debug("Access point is already running, stopping it first...")
@@ -296,6 +307,9 @@ class Server(object):
         return True
 
     def stop_ap(self):
+        if not self.wifi_if_present:
+            return False
+
         # make sure multicast addresses can be routed on the AP
         self.logger.debug("Removing multicast routes")
         try:
@@ -316,6 +330,9 @@ class Server(object):
     def wifi_scan(self):
         if self.access_point.is_running():
             raise RuntimeError("Can't scan for wifi cells when in ap mode")
+
+        if not self.wifi_if_present:
+            raise RuntimeError("No wifi interface present, can't scan")
 
         self.logger.debug("Freeing wifi interface")
         self.free_wifi()
@@ -350,6 +367,10 @@ class Server(object):
             return None
 
     def start_wifi(self, enable_restart=True):
+        if not self.wifi_if_present:
+            self.logger.warn("Wifi interface is not present, can't start it")
+            return False
+
         self.logger.debug("Connecting to wifi %s..." % self.wifi_connection_ssid)
         restart_ap = False
         if self.access_point.is_running() and enable_restart:
@@ -418,6 +439,9 @@ class Server(object):
         return True
 
     def on_start_ap_message(self, message):
+        if not self.wifi_if_present:
+            return False, 'Wifi interface %s is not present' % self.wifi_if
+
         if self.access_point is None:
             return False, 'access point is None'
 
@@ -429,6 +453,9 @@ class Server(object):
         return True, 'started ap'
 
     def on_stop_ap_message(self, message):
+        if not self.wifi_if_present:
+            return False, 'Wifi interface %s is not present' % self.wifi_if
+
         if self.access_point is None:
             return False, 'access point is None'
 
@@ -441,6 +468,9 @@ class Server(object):
         return True, 'stopped ap'
 
     def on_list_wifi_message(self, message):
+        if not self.wifi_if_present:
+            return False, 'Wifi interface %s is not present' % self.wifi_if
+
         self.logger.debug("Listing available wifi cells...")
 
         if self.access_point.is_running():
@@ -459,6 +489,8 @@ class Server(object):
         return True, self.__class__.convert_cells(self.cells)
 
     def on_configure_wifi_message(self, message):
+        if not self.wifi_if_present:
+            return False, 'Wifi interface %s is not present' % self.wifi_if
 
         self.logger.debug("Configuring wifi: %r..." % message)
 
@@ -478,6 +510,9 @@ class Server(object):
         return True, 'configured wifi as "%s"' % self.wifi_name
 
     def on_select_wifi_message(self, message):
+        if not self.wifi_if_present:
+            return False, 'Wifi interface %s is not present' % self.wifi_if
+
         if self.wifi_connection is None:
             return False, 'wifi is not yet configured'
 
@@ -502,7 +537,7 @@ class Server(object):
         current_ssid, current_address = self.current_wifi
 
         wifi = wired = ap = False
-        if self.wifi_if in self.last_reachable_devs and not self.access_point.is_running() and current_ssid:
+        if self.wifi_if_present and self.wifi_if in self.last_reachable_devs and not self.access_point.is_running() and current_ssid:
             wifi = True
         elif self.access_point.is_running():
             ap = True
@@ -520,7 +555,8 @@ class Server(object):
             wifi=dict(
                 current_ssid=current_ssid,
                 current_address=current_address,
-                valid_config=self.wifi_available
+                valid_config=self.wifi_available,
+                present=self.wifi_if_present
             )
         )
 
@@ -558,7 +594,12 @@ class Server(object):
 
     @property
     def current_wifi(self):
-        iwconfig_output = subprocess.check_output(["/sbin/iwconfig", self.wifi_if])
+        try:
+            iwconfig_output = subprocess.check_output(["/sbin/iwconfig", self.wifi_if])
+        except subprocess.CalledProcessError as e:
+            self.logger.warn("Error while trying to retrieve status of {wifi_if}: {output}".format(wifi_if=self.wifi_if, output=e.output))
+            self.wifi_if_present = False
+            return None, None
 
         m = iwconfig_re.search(iwconfig_output)
         if not m:
