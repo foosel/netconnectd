@@ -24,7 +24,7 @@ LOGFILE=/var/log/$NAME.log
 PKGNAME=netconnectd
 SCRIPTNAME=/etc/init.d/$PKGNAME
 
-DAEMON_ARGS="--config $CONFIGFILE --address $SOCKET --logfile $LOGFILE --foreground"
+DAEMON_ARGS=
 
 # Read configuration variable file if it is present
 [ -r /etc/default/$PKGNAME ] && . /etc/default/$PKGNAME
@@ -69,8 +69,9 @@ do_start()
    RETVAL="$?"
 
    if [ $RETVAL != 0 ]; then
+       args="--foreground --config $CONFIGFILE --address $SOCKET --logfile $LOGFILE $DAEMON_ARGS"
        start-stop-daemon --start --background --quiet --pidfile $PIDFILE --make-pidfile \
-       --exec $DAEMON -- $DAEMON_ARGS
+       --exec $DAEMON -- $args
        RETVAL="$?"
    fi
 }
