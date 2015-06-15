@@ -115,7 +115,6 @@ class Server(object):
         # for status messages...
         self.last_link = False
         self.last_reachable_devs = tuple()
-        self.last_ap_mode = False
 
         # prepare link monitor thread
         self.link_thread = threading.Thread(target=self._link_monitor, kwargs=dict(callback=self.on_link_change, interval=self.linkmon_interval))
@@ -562,17 +561,10 @@ class Server(object):
         )
 
     def on_link_change(self, former_link, current_link, current_devs):
-        access_point_running = self.access_point.is_running()
-        
-        if (former_link != current_link or self.last_reachable_devs != tuple(current_devs) or self.last_ap_mode != access_point_running):
-            action_out = subprocess.check_output(["/etc/netconnectd/netconnectd.action", str(former_link), str(current_link), str(self.last_reachable_devs), str(tuple(current_devs)), str(self.last_ap_mode), str(access_point_running)])
-            self.logger.debug("invoked action: %s" % action_out)
-            
-        
         self.last_link = current_link
         self.last_reachable_devs = tuple(current_devs)
-        self.last_ap_mode = access_point_running
-        
+
+        access_point_running = self.access_point.is_running()
         if current_link or access_point_running:
             if current_link and not former_link and not access_point_running:
                 self.logger.debug("Link restored!")
