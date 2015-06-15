@@ -34,7 +34,6 @@ EXTRAS_FILES = [
     ('/etc/init.d/', [('extras/netconnectd.init', 'netconnectd', 0755)]),
     ('/etc/default/', [('extras/netconnectd.default', 'netconnectd', 0644)]),
     ('/etc/netconnectd/', [('extras/netconnectd.yaml', 'netconnectd.yaml', 0600)]),
-    ('/etc/netconnectd/', [('extras/netconnectd.action', 'netconnectd.action', 0755)]),
     ('/etc/logrotate.d/', [('extras/netconnectd.logrotate', 'netconnectd', 0644)]),
 ]
 
