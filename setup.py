@@ -187,7 +187,7 @@ def params():
         "https://github.com/foosel/wifi-ap/archive/master.zip#egg=wifi-ap-dev"
     ]
     install_requires = [
-        "wifi-ap==dev",
+        "wifi-ap",
         "PyYaml",
         "netaddr"
     ]
