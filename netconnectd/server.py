@@ -9,17 +9,16 @@ import subprocess
 import sys
 import time
 import threading
-import wifi
-import wifi.scheme
-import wifi.utils
 
+import wifi
+import wifi_ap
 
 from .util import has_link, common_arguments, default_config, parse_configfile, InvalidConfig
 from .protocol import (Message, StartApMessage, StopApMessage, ListWifiMessage, ConfigureWifiMessage, SelectWifiMessage,
                        ForgetWifiMessage, ResetMessage, StatusMessage, SuccessResponse, ErrorResponse)
 
 
-iwconfig_re = re.compile('ESSID:"(?P<ssid>[^"]+)".*Access Point: (?P<address>%s).*' % wifi.utils.mac_addr_pattern , re.DOTALL)
+iwconfig_re = re.compile('ESSID:"(?P<ssid>[^"]+)".*Access Point: (?P<address>%s).*' % wifi_ap.mac_addr_pattern , re.DOTALL)
 
 
 class Server(object):
@@ -43,10 +42,10 @@ class Server(object):
             self.logger.error("Uncaught exception", exc_info=(exc_type, exc_value, exc_tb))
         sys.excepthook = exception_logger
 
-        self.Hostapd = wifi.Hostapd.for_hostapd_and_confd(path_hostapd, path_hostapd_conf)
-        self.Dnsmasq = wifi.Dnsmasq.for_dnsmasq_and_confd(path_dnsmasq, path_dnsmasq_conf)
-        self.Scheme = wifi.Scheme.for_file(path_interfaces)
-        self.AccessPoint = wifi.AccessPoint.for_classes(
+        self.Hostapd = wifi_ap.Hostapd.for_hostapd_and_confd(path_hostapd, path_hostapd_conf)
+        self.Dnsmasq = wifi_ap.Dnsmasq.for_dnsmasq_and_confd(path_dnsmasq, path_dnsmasq_conf)
+        self.Scheme = wifi_ap.Scheme.for_file(path_interfaces)
+        self.AccessPoint = wifi_ap.AccessPoint.for_classes(
             hostapd_cls=self.Hostapd,
             dnsmasq_cls=self.Dnsmasq,
             scheme_cls=self.Scheme
@@ -270,10 +269,10 @@ class Server(object):
 
         try:
             self.access_point.activate()
-        except wifi.scheme.WifiError as e:
+        except wifi_ap.ApError as e:
             self.logger.exception("Got an error while trying to activate the access point")
 
-            if isinstance(e, wifi.scheme.InterfaceError):
+            if isinstance(e, wifi_ap.ApSchemeError):
                 # trying to bring up the ap failed with an interface error => might be that the driver hiccuped due to
                 # some earlier event, or that our interface was not ready yet for being turned into an AP, so we now
                 # try to reset it by blocking/unblocking it and then trying to activate the AP a second time
@@ -385,9 +384,9 @@ class Server(object):
             self.logger.info("Connected to wifi %s" % self.wifi_connection_ssid)
             return True
 
-        except wifi.scheme.WifiError as e:
-            if isinstance(e, wifi.scheme.InterfaceError):
-                # trying to connect to the network failed with an interface error => might be that the driver hiccuped due to
+        except Exception as e:
+            if isinstance(e, wifi.subprocess.CalledProcessError):
+                # trying to connect to the network failed with a process error => might be that the driver hiccuped due to
                 # some earlier event, or that our interface was not ready yet, so we now try to reset it by blocking/unblocking
                 # it and then trying to activate the AP a second time
                 self.logger.info("First try at connecting to the network failed with an interface error, we'll try again now for a second time")
@@ -398,7 +397,7 @@ class Server(object):
                     # let's try that again, sometimes second time's the charm
                     self.wifi_connection.activate()
                     return True
-                except wifi.scheme.WifiError as e:
+                except Exception as e:
                     self.logger.exception("Second try at connecting to the network failed, giving up")
 
             self.wifi_available = False
@@ -408,8 +407,8 @@ class Server(object):
             except:
                 self.logger.exception("Could not deactivate wifi connection again, that's odd")
 
-            if isinstance(e, wifi.scheme.InterfaceError):
-                # we encountered an interface error, so we'll try to reset the wifi
+            if isinstance(e, wifi.subprocess.CalledProcessError):
+                # we encountered a process error, so we'll try to reset the wifi
                 self.reset_wifi()
 
             if restart_ap:

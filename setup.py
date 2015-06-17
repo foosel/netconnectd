@@ -184,10 +184,10 @@ def params():
     zip_safe = False
 
     dependency_links = [
-        "https://github.com/foosel/wifi/tarball/master#egg=wifi-1.0.1"
+        "https://github.com/foosel/wifi-ap/archive/master.zip#egg=wifi-ap-dev"
     ]
     install_requires = [
-        "wifi==1.0.1",
+        "wifi-ap==dev",
         "PyYaml",
         "netaddr"
     ]
