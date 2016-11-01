@@ -11,13 +11,15 @@ instead of the AP in the future.
 It is intended to be used as part of a connectivity solution, acting as the backend to a frontend e.g. in a web 
 application running on the device.
 
-netconnectd has been written to work with [Debian] based Linux distributions such as [Raspbian] or [Ubuntu].
+netconnectd has been written to work with [Debian] based Linux distributions such as [Raspbian] or [Ubuntu] and is provided
+under terms of the [AGPLv3] license.
 
 [hostapd]: http://w1.fi/hostapd/
 [dnsmasq]: http://www.thekelleys.org.uk/dnsmasq/doc.html
 [Debian]: http://www.debian.org/
 [Raspbian]: http://www.raspbian.org/
 [Ubuntu]: http://www.ubuntu.com/
+[AGPLv3]: https://www.gnu.org/licenses/agpl-3.0.en.html
 
 ## Motivation
 
